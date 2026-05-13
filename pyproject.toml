@@ -20,6 +20,11 @@ dependencies = [
     "tqdm>=4.67.3",
 ]
 
+[project.scripts]
+degrade-galaxy-zoo = "galaxy_zoo_project.degrade_cli:main"
+preprocess-galaxy-zoo = "galaxy_zoo_project.preprocess_cli:main"
+reconstruct-galaxy-zoo = "galaxy_zoo_project.reconstruct_cli:main"
+
 [build-system]
 requires = ["uv_build>=0.11.14,<0.12.0"]
 build-backend = "uv_build"
