@@ -8,3 +8,4 @@ results/
 *.ckpt
 .env
 kaggle.json
+.kaggle/
