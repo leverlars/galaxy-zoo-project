@@ -6,6 +6,13 @@ from pathlib import Path
 from galaxy_zoo_project.reconstruction import ReconstructionConfig, build_reconstruction_dataset
 
 
+def resolve_project_path(project_root: Path, path: Path | None, default: Path) -> Path:
+    selected = path or default
+    if selected.is_absolute():
+        return selected
+    return project_root / selected
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run classical Galaxy Zoo reconstruction baselines.")
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
@@ -27,11 +34,16 @@ def main() -> None:
     args = parse_args()
     project_root = args.project_root.resolve()
 
-    degraded_manifest_path = (
-        args.degraded_manifest_path
-        or project_root / "data" / "degraded" / "galaxy_zoo_128_moderate" / "manifest.csv"
+    degraded_manifest_path = resolve_project_path(
+        project_root,
+        args.degraded_manifest_path,
+        project_root / "data" / "degraded" / "galaxy_zoo_128_moderate" / "manifest.csv",
     )
-    output_dir = args.output_dir or project_root / "data" / "reconstructed" / "galaxy_zoo_128_baselines"
+    output_dir = resolve_project_path(
+        project_root,
+        args.output_dir,
+        project_root / "data" / "reconstructed" / "galaxy_zoo_128_baselines",
+    )
 
     config = ReconstructionConfig(
         project_root=project_root,

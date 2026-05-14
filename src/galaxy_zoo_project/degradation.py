@@ -23,7 +23,7 @@ class DegradationConfig:
     gaussian_noise_std: float = 0.03
     poisson_peak: float | None = None
     limit: int | None = None
-    split: str | None = None
+    split: str | tuple[str, ...] | None = None
     seed: int = 42
     overwrite: bool = False
 
@@ -120,7 +120,8 @@ def build_degraded_dataset(config: DegradationConfig) -> pd.DataFrame:
     if config.split is not None:
         if "split" not in manifest.columns:
             raise ValueError("Cannot filter by split because the manifest has no split column.")
-        manifest = manifest[manifest["split"] == config.split].copy()
+        selected_splits = (config.split,) if isinstance(config.split, str) else tuple(config.split)
+        manifest = manifest[manifest["split"].isin(selected_splits)].copy()
 
     if config.limit is not None:
         manifest = manifest.head(config.limit).copy()

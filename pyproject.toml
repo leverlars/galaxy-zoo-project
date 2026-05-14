@@ -24,6 +24,8 @@ dependencies = [
 degrade-galaxy-zoo = "galaxy_zoo_project.degrade_cli:main"
 preprocess-galaxy-zoo = "galaxy_zoo_project.preprocess_cli:main"
 reconstruct-galaxy-zoo = "galaxy_zoo_project.reconstruct_cli:main"
+analyze-galaxy-zoo-correlation = "galaxy_zoo_project.correlation_analysis_cli:main"
+train-galaxy-zoo-ml-baseline = "galaxy_zoo_project.ml_baseline_cli:main"
 
 [build-system]
 requires = ["uv_build>=0.11.14,<0.12.0"]

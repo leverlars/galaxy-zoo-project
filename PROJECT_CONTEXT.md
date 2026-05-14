@@ -27,7 +27,7 @@ where:
 - Data access: **COMPLETE**
 - Degradation/reconstruction pipeline: **WORKING**
 - Initial reconstruction experiments: **COMPLETE**
-- ML experiments: **NOT STARTED**
+- ML experiments: **STARTED**
 
 ## Current implemented pipeline
 1. Preprocess Galaxy Zoo images into fixed-size clean images and manifest
@@ -66,6 +66,12 @@ Interpretation:
 - Optionally add a regression head for vote percentages.
 - Evaluate on clean, degraded, and reconstructed conditions.
 
+Current lightweight baseline:
+- scikit-learn logistic regression on RGB pixels resized to 32x32
+- Class 1 target via argmax over `Class1.1`, `Class1.2`, `Class1.3`
+- trained on clean train split
+- evaluated on clean, degraded, and reconstructed val/test splits
+
 ### Priority 2 — Reconstruction impact study
 Main comparison:
 - clean → model
@@ -75,6 +81,11 @@ Main comparison:
 ### Priority 3 — Correlation analysis
 - Compare per-condition PSNR/SSIM against downstream ML metrics.
 - Analyze whether image-fidelity gains translate to task gains.
+
+Current status:
+- per-image reconstruction/task correlation analysis is implemented
+- outputs are written to `data/analysis/reconstruction_task_correlation/`
+- early result: PSNR/SSIM improvements have weak association with logistic-baseline correctness
 
 ## Constraints and conventions
 - Use `uv` and local `.venv` only.
