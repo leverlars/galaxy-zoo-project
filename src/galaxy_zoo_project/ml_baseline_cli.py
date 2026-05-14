@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from galaxy_zoo_project.ml_baseline import MLBaselineConfig, run_ml_baseline
+from galaxy_zoo_project.ml_baseline import FEATURE_MODES, MLBaselineConfig, run_ml_baseline
 
 
 def resolve_project_path(project_root: Path, path: Path | None, default: Path) -> Path:
@@ -22,6 +22,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=None)
     parser.add_argument("--train-split", default="train")
     parser.add_argument("--eval-splits", nargs="+", default=["val", "test"])
+    parser.add_argument("--feature-mode", choices=FEATURE_MODES, default="rgb")
     parser.add_argument("--feature-size", type=int, default=32)
     parser.add_argument("--max-iter", type=int, default=500)
     parser.add_argument("--seed", type=int, default=42)
@@ -48,10 +49,11 @@ def main() -> None:
         args.reconstruction_manifest_path,
         project_root / "data" / "reconstructed" / "galaxy_zoo_128_baselines" / "manifest.csv",
     )
+    default_output_name = f"class1_logistic_{args.feature_mode}{args.feature_size}"
     output_dir = resolve_project_path(
         project_root,
         args.output_dir,
-        project_root / "data" / "ml_baselines" / "class1_logistic_rgb32",
+        project_root / "data" / "ml_baselines" / default_output_name,
     )
 
     config = MLBaselineConfig(
@@ -62,6 +64,7 @@ def main() -> None:
         output_dir=output_dir,
         train_split=args.train_split,
         eval_splits=tuple(args.eval_splits),
+        feature_mode=args.feature_mode,
         feature_size=args.feature_size,
         max_iter=args.max_iter,
         seed=args.seed,

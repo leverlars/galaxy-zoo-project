@@ -13,10 +13,13 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from skimage.color import rgb2gray
+from skimage.feature import hog
 from tqdm.auto import tqdm
 
 
 CLASS1_TARGET_COLUMNS = ("Class1.1", "Class1.2", "Class1.3")
+FEATURE_MODES = ("rgb", "hog", "color_stats", "hog_color")
 CLASS1_LABELS = {
     "Class1.1": "smooth",
     "Class1.2": "features_or_disk",
@@ -34,6 +37,7 @@ class MLBaselineConfig:
     target_columns: tuple[str, ...] = CLASS1_TARGET_COLUMNS
     train_split: str = "train"
     eval_splits: tuple[str, ...] = ("val", "test")
+    feature_mode: str = "rgb"
     feature_size: int = 32
     max_iter: int = 500
     seed: int = 42
@@ -47,7 +51,55 @@ def _resolve_path(project_root: Path, path_value: str | Path) -> Path:
     return project_root / path
 
 
-def load_image_features(project_root: Path, image_paths: Iterable[str | Path], *, feature_size: int) -> np.ndarray:
+def color_stats_features(image: np.ndarray) -> np.ndarray:
+    channel_features = []
+    for channel in range(image.shape[-1]):
+        values = image[:, :, channel].reshape(-1)
+        histogram, _ = np.histogram(values, bins=16, range=(0.0, 1.0), density=True)
+        channel_features.extend(
+            [
+                float(values.mean()),
+                float(values.std()),
+                float(np.quantile(values, 0.1)),
+                float(np.quantile(values, 0.5)),
+                float(np.quantile(values, 0.9)),
+                *histogram.astype(float).tolist(),
+            ]
+        )
+    return np.asarray(channel_features, dtype=np.float32)
+
+
+def extract_image_features(image: np.ndarray, *, feature_mode: str) -> np.ndarray:
+    if feature_mode == "rgb":
+        return image.reshape(-1).astype(np.float32)
+    if feature_mode == "color_stats":
+        return color_stats_features(image)
+    if feature_mode in {"hog", "hog_color"}:
+        gray = rgb2gray(image)
+        hog_features = hog(
+            gray,
+            orientations=9,
+            pixels_per_cell=(8, 8),
+            cells_per_block=(2, 2),
+            block_norm="L2-Hys",
+            feature_vector=True,
+        ).astype(np.float32)
+        if feature_mode == "hog":
+            return hog_features
+        return np.concatenate([hog_features, color_stats_features(image)]).astype(np.float32)
+    raise ValueError(f"Unknown feature mode: {feature_mode}. Expected one of {FEATURE_MODES}.")
+
+
+def load_image_features(
+    project_root: Path,
+    image_paths: Iterable[str | Path],
+    *,
+    feature_size: int,
+    feature_mode: str,
+) -> np.ndarray:
+    if feature_mode not in FEATURE_MODES:
+        raise ValueError(f"Unknown feature mode: {feature_mode}. Expected one of {FEATURE_MODES}.")
+
     features = []
     paths = list(image_paths)
     for path_value in tqdm(paths, desc="Loading image features", unit="image"):
@@ -55,10 +107,10 @@ def load_image_features(project_root: Path, image_paths: Iterable[str | Path], *
         with Image.open(image_path) as image:
             image = image.convert("RGB").resize((feature_size, feature_size), Image.Resampling.BILINEAR)
             array = np.asarray(image, dtype=np.float32) / 255.0
-        features.append(array.reshape(-1))
+        features.append(extract_image_features(array, feature_mode=feature_mode))
 
     if not features:
-        return np.empty((0, feature_size * feature_size * 3), dtype=np.float32)
+        return np.empty((0, 0), dtype=np.float32)
     return np.stack(features).astype(np.float32)
 
 
@@ -166,9 +218,15 @@ def _evaluate_frame(
     project_root: Path,
     target_columns: tuple[str, ...],
     feature_size: int,
+    feature_mode: str,
 ) -> tuple[dict[str, float | int | str], pd.DataFrame]:
     y_true = class1_targets(frame, target_columns)
-    features = load_image_features(project_root, frame["image_path"], feature_size=feature_size)
+    features = load_image_features(
+        project_root,
+        frame["image_path"],
+        feature_size=feature_size,
+        feature_mode=feature_mode,
+    )
     y_pred = model.predict(features)
 
     metrics = {
@@ -199,7 +257,12 @@ def run_ml_baseline(config: MLBaselineConfig) -> dict[str, object]:
         raise ValueError(f"No training images found for split: {config.train_split}")
 
     y_train = class1_targets(train_frame, config.target_columns)
-    x_train = load_image_features(config.project_root, train_frame["image_path"], feature_size=config.feature_size)
+    x_train = load_image_features(
+        config.project_root,
+        train_frame["image_path"],
+        feature_size=config.feature_size,
+        feature_mode=config.feature_mode,
+    )
     model = _build_model(config)
     model.fit(x_train, y_train)
 
@@ -222,6 +285,7 @@ def run_ml_baseline(config: MLBaselineConfig) -> dict[str, object]:
             project_root=config.project_root,
             target_columns=config.target_columns,
             feature_size=config.feature_size,
+            feature_mode=config.feature_mode,
         )
         metric_records.append(metrics)
         prediction_frames.append(predictions)

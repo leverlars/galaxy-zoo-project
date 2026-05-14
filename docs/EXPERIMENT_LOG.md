@@ -66,3 +66,16 @@ Use this file as the persistent memory of what has been tried and what should ha
 - **Artifacts produced:** `src/galaxy_zoo_project/correlation_analysis.py`, `src/galaxy_zoo_project/correlation_analysis_cli.py`, `scripts/analyze_reconstruction_task_correlation.py`, `data/analysis/reconstruction_task_correlation/per_image_analysis.csv`, `task_metrics.csv`, `correlations.csv`, `delta_summary.csv`, `summary.json`.
 - **Interpretation:** Fidelity improvements are real, but their association with correctness is weak for this lightweight classifier. This strengthens the project result that PSNR/SSIM improvement alone is not enough evidence of downstream ML recovery.
 - **Next action:** Add visualization notebook/table exports for the report, then decide whether to install PyTorch for a stronger CNN baseline or stay lightweight with HOG/color-feature classifiers.
+
+---
+
+## 2026-05-14 — HOG+color feature classifier baseline
+- **Owner:** Codex
+- **Commit(s):** pending at time of entry
+- **Objective:** Improve the downstream classifier without adding heavy deep-learning dependencies, then test whether the reconstruction-vs-task conclusions hold for a stronger hand-crafted feature baseline.
+- **Data/config:** Same clean train split and full val/test degraded/reconstructed eval artifacts as previous run. Logistic regression with balanced class weights, `feature_mode=hog_color`, `feature_size=64`, `max_iter=1000`.
+- **Commands run:** `.venv/bin/python scripts/train_ml_baseline.py --feature-mode hog_color --feature-size 64 --degraded-manifest-path data/degraded/galaxy_zoo_128_moderate_eval/manifest.csv --reconstruction-manifest-path data/reconstructed/galaxy_zoo_128_eval_baselines/manifest.csv --output-dir data/ml_baselines/class1_logistic_hog_color64_eval --max-iter 1000`; `.venv/bin/python scripts/analyze_reconstruction_task_correlation.py --predictions-path data/ml_baselines/class1_logistic_hog_color64_eval/predictions.csv --output-dir data/analysis/reconstruction_task_correlation_hog_color64`.
+- **Key metrics:** Clean test accuracy/macro F1 `0.61`/`0.598`; clean val `0.68`/`0.657`. Degraded test `0.67`/`0.655`; degraded val `0.65`/`0.634`. Best reconstructed test accuracy was Richardson-Lucy `0.68`; best reconstructed val accuracy was Gaussian smoothing `0.66`. Strongest absolute Spearman correlation between fidelity metric and correctness was weak, about `0.208`.
+- **Artifacts produced:** Extended `src/galaxy_zoo_project/ml_baseline.py` and `src/galaxy_zoo_project/ml_baseline_cli.py` with `rgb`, `hog`, `color_stats`, and `hog_color` feature modes. Produced `data/ml_baselines/class1_logistic_hog_color64_eval/` and `data/analysis/reconstruction_task_correlation_hog_color64/`.
+- **Interpretation:** HOG+color features are stronger than raw RGB on validation and more robust to the current degradation. Reconstruction still does not show a consistent downstream benefit, and fidelity/correctness correlations remain weak. The scientific conclusion is therefore less tied to the initial raw-pixel baseline.
+- **Next action:** Add report-ready visualizations/tables comparing raw RGB vs HOG+color, or install PyTorch for a CNN baseline if dependency size is acceptable.

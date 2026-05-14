@@ -68,6 +68,7 @@ Interpretation:
 
 Current lightweight baseline:
 - scikit-learn logistic regression on RGB pixels resized to 32x32
+- optional HOG, color-statistics, and HOG+color feature modes
 - Class 1 target via argmax over `Class1.1`, `Class1.2`, `Class1.3`
 - trained on clean train split
 - evaluated on clean, degraded, and reconstructed val/test splits

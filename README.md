@@ -85,6 +85,7 @@ Useful options:
 
 ```bash
 .venv/bin/python scripts/train_ml_baseline.py --feature-size 48 --max-iter 1000
+.venv/bin/python scripts/train_ml_baseline.py --feature-mode hog_color --feature-size 64 --max-iter 1000
 .venv/bin/python scripts/train_ml_baseline.py --eval-splits val test
 .venv/bin/python scripts/train_ml_baseline.py --degraded-manifest-path data/degraded/galaxy_zoo_128_moderate_eval/manifest.csv --reconstruction-manifest-path data/reconstructed/galaxy_zoo_128_eval_baselines/manifest.csv --output-dir data/ml_baselines/class1_logistic_rgb32_eval
 ```
