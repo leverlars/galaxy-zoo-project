@@ -1,6 +1,6 @@
 # Galaxy Zoo Imaging and Morphology Experiments
 
-This project studies how computational imaging degradations affect downstream galaxy morphology prediction, and whether classical reconstruction methods recover image quality in a way that helps machine learning performance.
+This project studies how computational imaging degradations affect galaxy morphology prediction, and whether classical reconstruction methods recover image quality in a way that helps machine learning performance.
 
 The central imaging model is:
 
@@ -8,7 +8,7 @@ The central imaging model is:
 y = Hx + n
 ```
 
-where `x` is a clean Galaxy Zoo image, `H` is a blur/downsampling operator, and `n` is additive noise. The project compares image-fidelity metrics such as PSNR and SSIM with downstream Class 1 Galaxy Zoo morphology classification metrics.
+where `x` is a clean Galaxy Zoo image, `H` is a blur/downsampling operator, and `n` is additive noise. The project compares image fidelity metrics such as PSNR and SSIM with downstream Class 1 Galaxy Zoo morphology classification metrics.
 
 ## Repository Contents
 
@@ -53,7 +53,7 @@ The raw data are not included in the repository.
 .venv/bin/python scripts/preprocess_data.py --overwrite
 ```
 
-This creates fixed-size clean images and a split-aware manifest under:
+This creates fixed size clean images and a split aware manifest under:
 
 ```text
 data/processed/galaxy_zoo_128/
@@ -129,19 +129,3 @@ For the HOG plus color baseline:
 ```
 
 The analysis writes per-image joined data, task metrics, fidelity deltas, correlations, and summary JSON files under `data/analysis/`.
-
-## Main Findings
-
-On the moderate validation/test degradation used in this project:
-
-- Gaussian smoothing and total-variation denoising substantially improved PSNR and SSIM relative to degraded images.
-- The downstream Class 1 morphology classifiers showed little or inconsistent improvement from reconstructed images.
-- Per-image PSNR/SSIM improvements had weak association with classifier correctness.
-
-The main conclusion is that better image-fidelity metrics do not necessarily imply better downstream morphology classification performance for these lightweight baselines.
-
-## Notes
-
-- The train/validation/test split is stored in the processed manifest and reused across clean, degraded, and reconstructed variants.
-- `data/`, `.venv/`, Python bytecode, checkpoints, and model binaries are ignored by git.
-- Use the scripts in `scripts/` for reproducible runs; notebooks are included for inspection and exploratory work.
