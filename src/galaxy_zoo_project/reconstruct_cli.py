@@ -3,7 +3,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from galaxy_zoo_project.reconstruction import ReconstructionConfig, build_reconstruction_dataset
+from galaxy_zoo_project.reconstruction import (
+    ReconstructionConfig,
+    build_reconstruction_dataset,
+)
 
 
 def resolve_project_path(project_root: Path, path: Path | None, default: Path) -> Path:
@@ -14,11 +17,17 @@ def resolve_project_path(project_root: Path, path: Path | None, default: Path) -
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run classical Galaxy Zoo reconstruction baselines.")
+    parser = argparse.ArgumentParser(
+        description="Run classical Galaxy Zoo reconstruction baselines."
+    )
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--degraded-manifest-path", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path, default=None)
-    parser.add_argument("--methods", nargs="+", default=["identity", "gaussian_smooth", "tv_denoise", "richardson_lucy"])
+    parser.add_argument(
+        "--methods",
+        nargs="+",
+        default=["identity", "gaussian_smooth", "tv_denoise", "richardson_lucy"],
+    )
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--smooth-sigma", type=float, default=0.6)
     parser.add_argument("--tv-weight", type=float, default=0.06)

@@ -10,7 +10,11 @@ from skimage.filters import gaussian, unsharp_mask
 from skimage.restoration import denoise_tv_chambolle, richardson_lucy
 from tqdm.auto import tqdm
 
-from galaxy_zoo_project.degradation import image_quality_metrics, load_rgb_float, save_rgb_float
+from galaxy_zoo_project.degradation import (
+    image_quality_metrics,
+    load_rgb_float,
+    save_rgb_float,
+)
 
 
 @dataclass(frozen=True)
@@ -18,7 +22,12 @@ class ReconstructionConfig:
     project_root: Path
     degraded_manifest_path: Path
     output_dir: Path
-    methods: tuple[str, ...] = ("identity", "gaussian_smooth", "tv_denoise", "richardson_lucy")
+    methods: tuple[str, ...] = (
+        "identity",
+        "gaussian_smooth",
+        "tv_denoise",
+        "richardson_lucy",
+    )
     limit: int | None = None
     smooth_sigma: float = 0.6
     tv_weight: float = 0.06
@@ -41,7 +50,9 @@ def gaussian_psf(size: int, sigma: float) -> np.ndarray:
     return psf / psf.sum()
 
 
-def reconstruct_array(image: np.ndarray, method: str, config: ReconstructionConfig) -> np.ndarray:
+def reconstruct_array(
+    image: np.ndarray, method: str, config: ReconstructionConfig
+) -> np.ndarray:
     if method == "identity":
         reconstructed = image
     elif method == "gaussian_smooth":
@@ -86,13 +97,17 @@ def reconstruct_array(image: np.ndarray, method: str, config: ReconstructionConf
 
 def build_reconstruction_dataset(config: ReconstructionConfig) -> pd.DataFrame:
     if not config.degraded_manifest_path.exists():
-        raise FileNotFoundError(f"Degraded manifest not found: {config.degraded_manifest_path}")
+        raise FileNotFoundError(
+            f"Degraded manifest not found: {config.degraded_manifest_path}"
+        )
 
     degraded_manifest = pd.read_csv(config.degraded_manifest_path)
     required_columns = {"GalaxyID", "clean_path", "degraded_path"}
     missing_columns = required_columns - set(degraded_manifest.columns)
     if missing_columns:
-        raise ValueError(f"Degraded manifest is missing required columns: {sorted(missing_columns)}")
+        raise ValueError(
+            f"Degraded manifest is missing required columns: {sorted(missing_columns)}"
+        )
 
     if config.limit is not None:
         degraded_manifest = degraded_manifest.head(config.limit).copy()
@@ -156,6 +171,8 @@ def build_reconstruction_dataset(config: ReconstructionConfig) -> pd.DataFrame:
         "manifest_path": str(manifest_path.relative_to(config.project_root)),
         "metric_summary": metric_summary,
     }
-    (config.output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    (config.output_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n"
+    )
 
     return reconstruction_manifest

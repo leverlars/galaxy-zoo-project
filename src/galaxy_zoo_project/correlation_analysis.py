@@ -19,7 +19,11 @@ class CorrelationAnalysisConfig:
 
 
 def _relative_to_project(project_root: Path, path: Path) -> str:
-    return str(path.relative_to(project_root)) if path.is_relative_to(project_root) else str(path)
+    return (
+        str(path.relative_to(project_root))
+        if path.is_relative_to(project_root)
+        else str(path)
+    )
 
 
 def _pearson(x: pd.Series, y: pd.Series) -> float:
@@ -34,13 +38,17 @@ def _spearman(x: pd.Series, y: pd.Series) -> float:
     return float(x.corr(y, method="spearman"))
 
 
-def _load_required_csv(path: Path, required_columns: set[str], name: str) -> pd.DataFrame:
+def _load_required_csv(
+    path: Path, required_columns: set[str], name: str
+) -> pd.DataFrame:
     if not path.exists():
         raise FileNotFoundError(f"{name} not found: {path}")
     frame = pd.read_csv(path)
     missing_columns = required_columns - set(frame.columns)
     if missing_columns:
-        raise ValueError(f"{name} is missing required columns: {sorted(missing_columns)}")
+        raise ValueError(
+            f"{name} is missing required columns: {sorted(missing_columns)}"
+        )
     return frame
 
 
@@ -51,13 +59,28 @@ def _task_metrics(frame: pd.DataFrame) -> dict[str, float | int | str]:
         "split": str(frame["split"].iloc[0]),
         "n_samples": int(len(frame)),
         "accuracy": float(accuracy_score(frame["target"], frame["prediction"])),
-        "macro_f1": float(f1_score(frame["target"], frame["prediction"], average="macro", zero_division=0)),
-        "weighted_f1": float(f1_score(frame["target"], frame["prediction"], average="weighted", zero_division=0)),
+        "macro_f1": float(
+            f1_score(
+                frame["target"], frame["prediction"], average="macro", zero_division=0
+            )
+        ),
+        "weighted_f1": float(
+            f1_score(
+                frame["target"],
+                frame["prediction"],
+                average="weighted",
+                zero_division=0,
+            )
+        ),
     }
 
 
-def _join_reconstruction_predictions(reconstruction: pd.DataFrame, predictions: pd.DataFrame) -> pd.DataFrame:
-    reconstructed_predictions = predictions[predictions["condition"] == "reconstructed"].copy()
+def _join_reconstruction_predictions(
+    reconstruction: pd.DataFrame, predictions: pd.DataFrame
+) -> pd.DataFrame:
+    reconstructed_predictions = predictions[
+        predictions["condition"] == "reconstructed"
+    ].copy()
     joined = reconstruction.merge(
         reconstructed_predictions,
         on=["GalaxyID", "method"],
@@ -66,13 +89,17 @@ def _join_reconstruction_predictions(reconstruction: pd.DataFrame, predictions: 
         suffixes=("", "_prediction"),
     )
     if joined.empty:
-        raise ValueError("No reconstructed prediction rows matched reconstruction metrics.")
+        raise ValueError(
+            "No reconstructed prediction rows matched reconstruction metrics."
+        )
     joined["correct"] = joined["target"] == joined["prediction"]
     joined["correct_int"] = joined["correct"].astype(int)
     return joined
 
 
-def _join_degraded_predictions(degraded: pd.DataFrame, predictions: pd.DataFrame) -> pd.DataFrame:
+def _join_degraded_predictions(
+    degraded: pd.DataFrame, predictions: pd.DataFrame
+) -> pd.DataFrame:
     degraded_predictions = predictions[predictions["condition"] == "degraded"].copy()
     joined = degraded.merge(
         degraded_predictions,
@@ -90,7 +117,9 @@ def _join_degraded_predictions(degraded: pd.DataFrame, predictions: pd.DataFrame
     return joined
 
 
-def _correlation_records(frame: pd.DataFrame, metric_columns: tuple[str, ...]) -> list[dict[str, float | int | str]]:
+def _correlation_records(
+    frame: pd.DataFrame, metric_columns: tuple[str, ...]
+) -> list[dict[str, float | int | str]]:
     records = []
     for (split, method), group in frame.groupby(["split", "method"], sort=True):
         for metric in metric_columns:
@@ -100,16 +129,26 @@ def _correlation_records(frame: pd.DataFrame, metric_columns: tuple[str, ...]) -
                     "method": method,
                     "metric": metric,
                     "n_samples": int(len(group)),
-                    "pearson_with_correct": _pearson(group[metric], group["correct_int"]),
-                    "spearman_with_correct": _spearman(group[metric], group["correct_int"]),
-                    "mean_metric_when_correct": float(group.loc[group["correct"], metric].mean()),
-                    "mean_metric_when_incorrect": float(group.loc[~group["correct"], metric].mean()),
+                    "pearson_with_correct": _pearson(
+                        group[metric], group["correct_int"]
+                    ),
+                    "spearman_with_correct": _spearman(
+                        group[metric], group["correct_int"]
+                    ),
+                    "mean_metric_when_correct": float(
+                        group.loc[group["correct"], metric].mean()
+                    ),
+                    "mean_metric_when_incorrect": float(
+                        group.loc[~group["correct"], metric].mean()
+                    ),
                 }
             )
     return records
 
 
-def _add_reference_deltas(reconstructed: pd.DataFrame, degraded: pd.DataFrame) -> pd.DataFrame:
+def _add_reference_deltas(
+    reconstructed: pd.DataFrame, degraded: pd.DataFrame
+) -> pd.DataFrame:
     degraded_reference = degraded[["GalaxyID", "psnr", "ssim", "correct_int"]].rename(
         columns={
             "psnr": "degraded_psnr",
@@ -117,10 +156,18 @@ def _add_reference_deltas(reconstructed: pd.DataFrame, degraded: pd.DataFrame) -
             "correct_int": "degraded_correct_int",
         }
     )
-    with_deltas = reconstructed.merge(degraded_reference, on="GalaxyID", how="left", validate="many_to_one")
-    with_deltas["psnr_delta_vs_degraded"] = with_deltas["psnr"] - with_deltas["degraded_psnr"]
-    with_deltas["ssim_delta_vs_degraded"] = with_deltas["ssim"] - with_deltas["degraded_ssim"]
-    with_deltas["correct_delta_vs_degraded"] = with_deltas["correct_int"] - with_deltas["degraded_correct_int"]
+    with_deltas = reconstructed.merge(
+        degraded_reference, on="GalaxyID", how="left", validate="many_to_one"
+    )
+    with_deltas["psnr_delta_vs_degraded"] = (
+        with_deltas["psnr"] - with_deltas["degraded_psnr"]
+    )
+    with_deltas["ssim_delta_vs_degraded"] = (
+        with_deltas["ssim"] - with_deltas["degraded_ssim"]
+    )
+    with_deltas["correct_delta_vs_degraded"] = (
+        with_deltas["correct_int"] - with_deltas["degraded_correct_int"]
+    )
 
     identity_reference = reconstructed[reconstructed["method"] == "identity"][
         ["GalaxyID", "psnr", "ssim", "correct_int"]
@@ -131,10 +178,18 @@ def _add_reference_deltas(reconstructed: pd.DataFrame, degraded: pd.DataFrame) -
             "correct_int": "identity_correct_int",
         }
     )
-    with_deltas = with_deltas.merge(identity_reference, on="GalaxyID", how="left", validate="many_to_one")
-    with_deltas["psnr_delta_vs_identity"] = with_deltas["psnr"] - with_deltas["identity_psnr"]
-    with_deltas["ssim_delta_vs_identity"] = with_deltas["ssim"] - with_deltas["identity_ssim"]
-    with_deltas["correct_delta_vs_identity"] = with_deltas["correct_int"] - with_deltas["identity_correct_int"]
+    with_deltas = with_deltas.merge(
+        identity_reference, on="GalaxyID", how="left", validate="many_to_one"
+    )
+    with_deltas["psnr_delta_vs_identity"] = (
+        with_deltas["psnr"] - with_deltas["identity_psnr"]
+    )
+    with_deltas["ssim_delta_vs_identity"] = (
+        with_deltas["ssim"] - with_deltas["identity_ssim"]
+    )
+    with_deltas["correct_delta_vs_identity"] = (
+        with_deltas["correct_int"] - with_deltas["identity_correct_int"]
+    )
     return with_deltas
 
 
@@ -157,12 +212,16 @@ def run_correlation_analysis(config: CorrelationAnalysisConfig) -> dict[str, obj
 
     degraded_joined = _join_degraded_predictions(degraded, predictions)
     reconstructed_joined = _join_reconstruction_predictions(reconstruction, predictions)
-    reconstructed_with_deltas = _add_reference_deltas(reconstructed_joined, degraded_joined)
+    reconstructed_with_deltas = _add_reference_deltas(
+        reconstructed_joined, degraded_joined
+    )
 
     task_metrics = pd.DataFrame(
         [
             _task_metrics(group)
-            for _, group in predictions.groupby(["condition", "method", "split"], sort=True)
+            for _, group in predictions.groupby(
+                ["condition", "method", "split"], sort=True
+            )
         ]
     ).sort_values(["split", "condition", "method"])
 
@@ -170,7 +229,12 @@ def run_correlation_analysis(config: CorrelationAnalysisConfig) -> dict[str, obj
         _correlation_records(reconstructed_with_deltas, ("psnr", "ssim"))
         + _correlation_records(
             reconstructed_with_deltas,
-            ("psnr_delta_vs_degraded", "ssim_delta_vs_degraded", "psnr_delta_vs_identity", "ssim_delta_vs_identity"),
+            (
+                "psnr_delta_vs_degraded",
+                "ssim_delta_vs_degraded",
+                "psnr_delta_vs_identity",
+                "ssim_delta_vs_identity",
+            ),
         )
     )
 
@@ -204,8 +268,12 @@ def run_correlation_analysis(config: CorrelationAnalysisConfig) -> dict[str, obj
     delta_summary.to_csv(delta_summary_path, index=False)
 
     strongest_abs = correlation_frame.copy()
-    strongest_abs["abs_spearman_with_correct"] = strongest_abs["spearman_with_correct"].abs()
-    strongest_abs = strongest_abs.sort_values("abs_spearman_with_correct", ascending=False)
+    strongest_abs["abs_spearman_with_correct"] = strongest_abs[
+        "spearman_with_correct"
+    ].abs()
+    strongest_abs = strongest_abs.sort_values(
+        "abs_spearman_with_correct", ascending=False
+    )
 
     summary = {
         "config": {
@@ -215,12 +283,22 @@ def run_correlation_analysis(config: CorrelationAnalysisConfig) -> dict[str, obj
         "num_degraded_rows": int(len(degraded_joined)),
         "num_reconstructed_rows": int(len(reconstructed_with_deltas)),
         "outputs": {
-            "per_image_analysis": _relative_to_project(config.project_root, per_image_path),
-            "task_metrics": _relative_to_project(config.project_root, task_metrics_path),
-            "correlations": _relative_to_project(config.project_root, correlations_path),
-            "delta_summary": _relative_to_project(config.project_root, delta_summary_path),
+            "per_image_analysis": _relative_to_project(
+                config.project_root, per_image_path
+            ),
+            "task_metrics": _relative_to_project(
+                config.project_root, task_metrics_path
+            ),
+            "correlations": _relative_to_project(
+                config.project_root, correlations_path
+            ),
+            "delta_summary": _relative_to_project(
+                config.project_root, delta_summary_path
+            ),
         },
-        "strongest_spearman_correlations": strongest_abs.head(10).to_dict(orient="records"),
+        "strongest_spearman_correlations": strongest_abs.head(10).to_dict(
+            orient="records"
+        ),
     }
     summary_path.write_text(json.dumps(summary, indent=2) + "\n")
     return summary

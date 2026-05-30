@@ -3,7 +3,11 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from galaxy_zoo_project.ml_baseline import FEATURE_MODES, MLBaselineConfig, run_ml_baseline
+from galaxy_zoo_project.ml_baseline import (
+    FEATURE_MODES,
+    MLBaselineConfig,
+    run_ml_baseline,
+)
 
 
 def resolve_project_path(project_root: Path, path: Path | None, default: Path) -> Path:
@@ -14,7 +18,9 @@ def resolve_project_path(project_root: Path, path: Path | None, default: Path) -
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Train and evaluate a manifest-driven Galaxy Zoo ML baseline.")
+    parser = argparse.ArgumentParser(
+        description="Train and evaluate a manifest-driven Galaxy Zoo ML baseline."
+    )
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--processed-manifest-path", type=Path, default=None)
     parser.add_argument("--degraded-manifest-path", type=Path, default=None)
@@ -47,7 +53,11 @@ def main() -> None:
     reconstruction_manifest_path = resolve_project_path(
         project_root,
         args.reconstruction_manifest_path,
-        project_root / "data" / "reconstructed" / "galaxy_zoo_128_baselines" / "manifest.csv",
+        project_root
+        / "data"
+        / "reconstructed"
+        / "galaxy_zoo_128_baselines"
+        / "manifest.csv",
     )
     default_output_name = f"class1_logistic_{args.feature_mode}{args.feature_size}"
     output_dir = resolve_project_path(

@@ -51,7 +51,9 @@ def degrade_array(
     rng: np.random.Generator,
 ) -> np.ndarray:
     if clean.ndim != 3 or clean.shape[-1] != 3:
-        raise ValueError(f"Expected RGB image array with shape HxWx3, got {clean.shape}")
+        raise ValueError(
+            f"Expected RGB image array with shape HxWx3, got {clean.shape}"
+        )
     if downsample_factor < 1:
         raise ValueError("downsample_factor must be at least 1.")
 
@@ -87,7 +89,9 @@ def degrade_array(
         ).astype(np.float32)
 
     if poisson_peak is not None and poisson_peak > 0:
-        degraded = rng.poisson(np.clip(degraded, 0.0, 1.0) * poisson_peak) / poisson_peak
+        degraded = (
+            rng.poisson(np.clip(degraded, 0.0, 1.0) * poisson_peak) / poisson_peak
+        )
 
     if gaussian_noise_std > 0:
         degraded = degraded + rng.normal(0.0, gaussian_noise_std, size=degraded.shape)
@@ -111,16 +115,24 @@ def image_quality_metrics(clean: np.ndarray, degraded: np.ndarray) -> dict[str, 
 
 def build_degraded_dataset(config: DegradationConfig) -> pd.DataFrame:
     if not config.processed_manifest_path.exists():
-        raise FileNotFoundError(f"Processed manifest not found: {config.processed_manifest_path}")
+        raise FileNotFoundError(
+            f"Processed manifest not found: {config.processed_manifest_path}"
+        )
 
     manifest = pd.read_csv(config.processed_manifest_path)
     if "processed_path" not in manifest.columns or "GalaxyID" not in manifest.columns:
-        raise ValueError("Processed manifest must contain GalaxyID and processed_path columns.")
+        raise ValueError(
+            "Processed manifest must contain GalaxyID and processed_path columns."
+        )
 
     if config.split is not None:
         if "split" not in manifest.columns:
-            raise ValueError("Cannot filter by split because the manifest has no split column.")
-        selected_splits = (config.split,) if isinstance(config.split, str) else tuple(config.split)
+            raise ValueError(
+                "Cannot filter by split because the manifest has no split column."
+            )
+        selected_splits = (
+            (config.split,) if isinstance(config.split, str) else tuple(config.split)
+        )
         manifest = manifest[manifest["split"].isin(selected_splits)].copy()
 
     if config.limit is not None:
@@ -132,7 +144,12 @@ def build_degraded_dataset(config: DegradationConfig) -> pd.DataFrame:
     records = []
     images_dir = config.output_dir / "images"
 
-    for row in tqdm(manifest.itertuples(index=False), total=len(manifest), desc="Degrading images", unit="image"):
+    for row in tqdm(
+        manifest.itertuples(index=False),
+        total=len(manifest),
+        desc="Degrading images",
+        unit="image",
+    ):
         galaxy_id = int(row.GalaxyID)
         clean_path = config.project_root / row.processed_path
         degraded_path = images_dir / f"{galaxy_id}.jpg"
@@ -184,6 +201,8 @@ def build_degraded_dataset(config: DegradationConfig) -> pd.DataFrame:
         "mean_psnr": float(degraded_manifest["psnr"].mean()),
         "mean_ssim": float(degraded_manifest["ssim"].mean()),
     }
-    (config.output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    (config.output_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n"
+    )
 
     return degraded_manifest

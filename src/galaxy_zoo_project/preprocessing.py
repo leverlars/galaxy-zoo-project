@@ -10,7 +10,6 @@ from PIL import Image
 from sklearn.model_selection import train_test_split
 from tqdm.auto import tqdm
 
-
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".tif", ".tiff"}
 
 
@@ -82,7 +81,9 @@ def assign_splits(
         return {}
 
     if val_fraction < 0 or test_fraction < 0 or val_fraction + test_fraction >= 1:
-        raise ValueError("val_fraction and test_fraction must be non-negative and sum to less than 1.")
+        raise ValueError(
+            "val_fraction and test_fraction must be non-negative and sum to less than 1."
+        )
 
     train_ids, temp_ids = train_test_split(
         galaxy_ids,
@@ -118,7 +119,9 @@ def build_processed_dataset(config: PreprocessConfig) -> pd.DataFrame:
 
     labels = pd.read_csv(config.raw_labels_path)
     if "GalaxyID" not in labels.columns:
-        raise ValueError(f"Labels file must contain a GalaxyID column: {config.raw_labels_path}")
+        raise ValueError(
+            f"Labels file must contain a GalaxyID column: {config.raw_labels_path}"
+        )
 
     labels_by_id = labels.set_index("GalaxyID", drop=False)
     image_records = []
@@ -131,7 +134,9 @@ def build_processed_dataset(config: PreprocessConfig) -> pd.DataFrame:
             continue
 
         relative_raw_path = image_path.relative_to(config.project_root)
-        processed_path = config.output_dir / "images" / f"{galaxy_id}.{config.image_format}"
+        processed_path = (
+            config.output_dir / "images" / f"{galaxy_id}.{config.image_format}"
+        )
         relative_processed_path = processed_path.relative_to(config.project_root)
 
         image_records.append(
@@ -186,10 +191,14 @@ def build_processed_dataset(config: PreprocessConfig) -> pd.DataFrame:
         "splits": manifest["split"].value_counts().sort_index().to_dict(),
         "manifest_path": str(manifest_path.relative_to(config.project_root)),
     }
-    (config.output_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
+    (config.output_dir / "summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n"
+    )
 
     if missing_label_ids:
         missing_path = config.output_dir / "missing_label_ids.txt"
-        missing_path.write_text("\n".join(str(galaxy_id) for galaxy_id in missing_label_ids) + "\n")
+        missing_path.write_text(
+            "\n".join(str(galaxy_id) for galaxy_id in missing_label_ids) + "\n"
+        )
 
     return manifest

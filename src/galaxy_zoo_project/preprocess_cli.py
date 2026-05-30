@@ -7,7 +7,9 @@ from galaxy_zoo_project.preprocessing import PreprocessConfig, build_processed_d
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Create a processed Galaxy Zoo image dataset.")
+    parser = argparse.ArgumentParser(
+        description="Create a processed Galaxy Zoo image dataset."
+    )
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--raw-image-dir", type=Path, default=None)
     parser.add_argument("--raw-labels-path", type=Path, default=None)
@@ -27,9 +29,17 @@ def main() -> None:
     args = parse_args()
     project_root = args.project_root.resolve()
 
-    raw_image_dir = args.raw_image_dir or project_root / "data" / "raw" / "images_training_rev1"
-    raw_labels_path = args.raw_labels_path or project_root / "data" / "raw" / "training_solutions_rev1.csv"
-    output_dir = args.output_dir or project_root / "data" / "processed" / f"galaxy_zoo_{args.output_size}"
+    raw_image_dir = (
+        args.raw_image_dir or project_root / "data" / "raw" / "images_training_rev1"
+    )
+    raw_labels_path = (
+        args.raw_labels_path
+        or project_root / "data" / "raw" / "training_solutions_rev1.csv"
+    )
+    output_dir = (
+        args.output_dir
+        or project_root / "data" / "processed" / f"galaxy_zoo_{args.output_size}"
+    )
 
     config = PreprocessConfig(
         project_root=project_root,

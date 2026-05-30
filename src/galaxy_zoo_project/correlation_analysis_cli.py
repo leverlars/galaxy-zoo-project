@@ -3,7 +3,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from galaxy_zoo_project.correlation_analysis import CorrelationAnalysisConfig, run_correlation_analysis
+from galaxy_zoo_project.correlation_analysis import (
+    CorrelationAnalysisConfig,
+    run_correlation_analysis,
+)
 
 
 def resolve_project_path(project_root: Path, path: Path | None, default: Path) -> Path:
@@ -34,17 +37,29 @@ def main() -> None:
         degraded_manifest_path=resolve_project_path(
             project_root,
             args.degraded_manifest_path,
-            project_root / "data" / "degraded" / "galaxy_zoo_128_moderate_eval" / "manifest.csv",
+            project_root
+            / "data"
+            / "degraded"
+            / "galaxy_zoo_128_moderate_eval"
+            / "manifest.csv",
         ),
         reconstruction_manifest_path=resolve_project_path(
             project_root,
             args.reconstruction_manifest_path,
-            project_root / "data" / "reconstructed" / "galaxy_zoo_128_eval_baselines" / "manifest.csv",
+            project_root
+            / "data"
+            / "reconstructed"
+            / "galaxy_zoo_128_eval_baselines"
+            / "manifest.csv",
         ),
         predictions_path=resolve_project_path(
             project_root,
             args.predictions_path,
-            project_root / "data" / "ml_baselines" / "class1_logistic_rgb32_eval" / "predictions.csv",
+            project_root
+            / "data"
+            / "ml_baselines"
+            / "class1_logistic_rgb32_eval"
+            / "predictions.csv",
         ),
         output_dir=resolve_project_path(
             project_root,
@@ -54,7 +69,9 @@ def main() -> None:
     )
 
     summary = run_correlation_analysis(config)
-    print(f"Analyzed {summary['num_reconstructed_rows']:,} reconstructed image-method rows")
+    print(
+        f"Analyzed {summary['num_reconstructed_rows']:,} reconstructed image-method rows"
+    )
     print(f"Per-image analysis: {summary['outputs']['per_image_analysis']}")
     print(f"Task metrics: {summary['outputs']['task_metrics']}")
     print(f"Correlations: {summary['outputs']['correlations']}")

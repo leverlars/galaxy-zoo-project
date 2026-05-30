@@ -14,7 +14,9 @@ def resolve_project_path(project_root: Path, path: Path | None, default: Path) -
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Create degraded Galaxy Zoo observations.")
+    parser = argparse.ArgumentParser(
+        description="Create degraded Galaxy Zoo observations."
+    )
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--processed-manifest-path", type=Path, default=None)
     parser.add_argument("--output-dir", type=Path, default=None)
@@ -24,7 +26,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--poisson-peak", type=float, default=None)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--split", choices=["train", "val", "test"], default=None)
-    parser.add_argument("--splits", nargs="+", choices=["train", "val", "test"], default=None)
+    parser.add_argument(
+        "--splits", nargs="+", choices=["train", "val", "test"], default=None
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--overwrite", action="store_true")
     return parser.parse_args()
